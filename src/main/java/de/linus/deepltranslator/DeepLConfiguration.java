@@ -8,17 +8,21 @@ public class DeepLConfiguration {
     /**
      * If the http response didn't receive within the specified time,
      * the request cancels.
-     * <p></p>
+     * <p>
+     * </p>
      * Default duration is 10 seconds.
      *
-     * @see DeepLTranslatorBase#getTranslation(String, SourceLanguage, TargetLanguage)
+     * @see DeepLTranslatorBase#getTranslation(String, SourceLanguage,
+     *      TargetLanguage)
      */
     private final Duration timeout;
 
     /**
      * Used if an error occurs.
-     * <p>-1 is used for repeating the request until it succeeds.
-     * <p></p>
+     * <p>
+     * -1 is used for repeating the request until it succeeds.
+     * <p>
+     * </p>
      * Default value is 3.
      */
     private final int repetitions;
@@ -26,36 +30,50 @@ public class DeepLConfiguration {
     /**
      * Is only of use if {@link DeepLConfiguration#repetitions} isn't zero.
      * This value represents the delay with which the request is repeated.
-     * <p></p>
+     * <p>
+     * </p>
      * Default interval is [3000 + 5000 * retryNumber] milliseconds.
-     * <p>Note: The first retry has the retryNumber 0.
+     * <p>
+     * Note: The first retry has the retryNumber 0.
      */
     private final Function<Integer, Duration> repetitionsDelay;
 
     /**
      * Whether the translation should be post-processed.
-     * <p></p>
+     * <p>
+     * </p>
      * If post-processing is enabled, leading and trailing spaces are removed
      * and multiple consecutive spaces are replaced with a single space.
-     * <p></p>
+     * <p>
+     * </p>
      * By default, post-processing is disabled.
      */
     private final boolean postProcessing;
 
-    private DeepLConfiguration(Duration timeout, int repetitions, Function<Integer, Duration> repetitionsDelay, boolean postProcessing) {
+    private final String remoteWebDriverUrl;
+
+    private DeepLConfiguration(Duration timeout, int repetitions, Function<Integer, Duration> repetitionsDelay,
+            boolean postProcessing, String remoteWebDriverUrl) {
         this.timeout = timeout;
         this.repetitions = repetitions;
         this.repetitionsDelay = repetitionsDelay;
         this.postProcessing = postProcessing;
+        this.remoteWebDriverUrl = remoteWebDriverUrl;
+    }
+
+    public String getRemoteWebDriverUrl() {
+        return remoteWebDriverUrl;
     }
 
     /**
      * If the http response didn't receive within the specified time,
      * the request cancels.
-     * <p></p>
+     * <p>
+     * </p>
      * Default duration is 10 seconds.
      *
-     * @see DeepLTranslatorBase#getTranslation(String, SourceLanguage, TargetLanguage)
+     * @see DeepLTranslatorBase#getTranslation(String, SourceLanguage,
+     *      TargetLanguage)
      */
     public Duration getTimeout() {
         return timeout;
@@ -63,8 +81,10 @@ public class DeepLConfiguration {
 
     /**
      * Used if an error occurs.
-     * <p>-1 is used for repeating the request until it succeeds.
-     * <p></p>
+     * <p>
+     * -1 is used for repeating the request until it succeeds.
+     * <p>
+     * </p>
      * Default value is 3.
      */
     public int getRepetitions() {
@@ -74,9 +94,11 @@ public class DeepLConfiguration {
     /**
      * Is only of use if {@link DeepLConfiguration#repetitions} isn't zero.
      * This value represents the delay with which the request is repeated.
-     * <p></p>
+     * <p>
+     * </p>
      * Default interval is [3000 + 5000 * retryNumber] milliseconds.
-     * <p>Note: The first retry has the retryNumber 0.
+     * <p>
+     * Note: The first retry has the retryNumber 0.
      */
     public Function<Integer, Duration> getRepetitionsDelay() {
         return repetitionsDelay;
@@ -84,10 +106,12 @@ public class DeepLConfiguration {
 
     /**
      * Whether the translation should be post-processed.
-     * <p></p>
+     * <p>
+     * </p>
      * If post-processing is enabled, leading and trailing spaces are removed
      * and multiple consecutive spaces are replaced with a single space.
-     * <p></p>
+     * <p>
+     * </p>
      * By default, post-processing is disabled.
      */
     public boolean isPostProcessingEnabled() {
@@ -100,6 +124,7 @@ public class DeepLConfiguration {
         private int repetitions;
         private Function<Integer, Duration> repetitionsDelay;
         private boolean postProcessing;
+        private String remoteWebDriverUrl;
 
         public Builder() {
             timeout = Duration.ofSeconds(10);
@@ -111,10 +136,12 @@ public class DeepLConfiguration {
         /**
          * If the http response didn't receive within the specified time,
          * the request cancels.
-         * <p></p>
+         * <p>
+         * </p>
          * Default duration is 10 seconds.
          *
-         * @see DeepLTranslatorBase#getTranslation(String, SourceLanguage, TargetLanguage)
+         * @see DeepLTranslatorBase#getTranslation(String, SourceLanguage,
+         *      TargetLanguage)
          */
         public Builder setTimeout(Duration timeout) {
             this.timeout = timeout;
@@ -123,8 +150,10 @@ public class DeepLConfiguration {
 
         /**
          * Used if an error occurs.
-         * <p>-1 is used for repeating the request until it succeeds.
-         * <p></p>
+         * <p>
+         * -1 is used for repeating the request until it succeeds.
+         * <p>
+         * </p>
          * Default value is 3.
          */
         public Builder setRepetitions(int repetitions) {
@@ -135,9 +164,11 @@ public class DeepLConfiguration {
         /**
          * Is only of use if {@link DeepLConfiguration#repetitions} isn't zero.
          * This value represents the delay with which the request is repeated.
-         * <p></p>
+         * <p>
+         * </p>
          * Default interval is [3000 + 5000 * retryNumber] milliseconds.
-         * <p>Note: The first retry has the retryNumber 0.
+         * <p>
+         * Note: The first retry has the retryNumber 0.
          */
         public Builder setRepetitionsDelay(Function<Integer, Duration> repetitionsDelay) {
             this.repetitionsDelay = repetitionsDelay;
@@ -146,10 +177,12 @@ public class DeepLConfiguration {
 
         /**
          * Whether the translation should be post-processed.
-         * <p></p>
+         * <p>
+         * </p>
          * If post-processing is enabled, leading and trailing spaces are removed
          * and multiple consecutive spaces are replaced with a single space.
-         * <p></p>
+         * <p>
+         * </p>
          * By default, post-processing is disabled.
          */
         public Builder setPostProcessing(boolean postProcessing) {
@@ -157,11 +190,16 @@ public class DeepLConfiguration {
             return this;
         }
 
+        public Builder remoteWebDriverUrl(String remoteWebDriverUrl) {
+            this.remoteWebDriverUrl = remoteWebDriverUrl;
+            return this;
+        }
+
         /**
          * Builds the configuration.
          */
         public DeepLConfiguration build() {
-            return new DeepLConfiguration(timeout, repetitions, repetitionsDelay, postProcessing);
+            return new DeepLConfiguration(timeout, repetitions, repetitionsDelay, postProcessing, remoteWebDriverUrl);
         }
 
     }

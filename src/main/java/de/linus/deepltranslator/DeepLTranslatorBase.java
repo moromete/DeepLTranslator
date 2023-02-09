@@ -3,10 +3,13 @@ package de.linus.deepltranslator;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,8 +61,8 @@ class DeepLTranslatorBase {
      * <p>
      * Source: https://github.com/dcts/remove-CSS-animations
      */
-    private static final String DISABLE_ANIMATIONS_SCRIPT =
-            "document.querySelector('html > head').insertAdjacentHTML(\"beforeend\", \"" +
+    private static final String DISABLE_ANIMATIONS_SCRIPT = "document.querySelector('html > head').insertAdjacentHTML(\"beforeend\", \""
+            +
             "<style>\\n" +
             "* {\\n" +
             "  -o-transition-property: none !important;\\n" +
@@ -92,8 +95,8 @@ class DeepLTranslatorBase {
 
     static {
         // Set default user agent
-        ChromeDriver dummyDriver = newWebDriver();
-        String userAgent = (String) dummyDriver.executeScript("return navigator.userAgent");
+        WebDriver dummyDriver = newWebDriver();
+        String userAgent = (String) ((ChromeDriver) dummyDriver).executeScript("return navigator.userAgent");
         USER_AGENT = userAgent.replace("HeadlessChrome", "Chrome");
         dummyDriver.close();
     }
@@ -123,11 +126,11 @@ class DeepLTranslatorBase {
      * Checks if all arguments are valid, if not, an exception is thrown.
      */
     void isValid(String text, SourceLanguage from, TargetLanguage to) throws IllegalStateException {
-        if(text == null || text.trim().isEmpty()) {
+        if (text == null || text.trim().isEmpty()) {
             throw new IllegalStateException("Text is null or empty");
-        } else if(from == null || to == null) {
+        } else if (from == null || to == null) {
             throw new IllegalStateException("Language is null");
-        } else if(text.length() > 5000) {
+        } else if (text.length() > 5000) {
             throw new IllegalStateException("Text length is limited to 5000 characters");
         }
     }
@@ -142,14 +145,21 @@ class DeepLTranslatorBase {
 
         try {
             if (driver == null) {
-                driver = newWebDriver();
-                driver.manage().timeouts().pageLoadTimeout(Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
+                if (configuration.getRemoteWebDriverUrl() != null) {
+                    driver = newRemoteWebDriver(configuration.getRemoteWebDriverUrl());
+                } else {
+                    driver = newWebDriver();
+                }
+                driver.manage().timeouts()
+                        .pageLoadTimeout(Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
 
                 GLOBAL_INSTANCES.add(driver);
                 driver.get("https://www.deepl.com/translator");
-                ((ChromeDriver) driver).executeScript(DISABLE_ANIMATIONS_SCRIPT);
+                ((RemoteWebDriver) driver).executeScript(DISABLE_ANIMATIONS_SCRIPT);
             }
-        } catch (TimeoutException e) {
+        } catch (
+
+        TimeoutException e) {
             GLOBAL_INSTANCES.remove(driver);
             driver.close();
             throw e;
@@ -159,17 +169,19 @@ class DeepLTranslatorBase {
             // Source language button
             driver.findElements(By.className("lmt__language_select__active")).get(0).click();
             By srcButtonBy = By.xpath("//button[@dl-test='" + from.getAttributeValue() + "']");
-            WebDriverWait waitSource = new WebDriverWait(driver, Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
+            WebDriverWait waitSource = new WebDriverWait(driver,
+                    Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
             waitSource.until(ExpectedConditions.visibilityOfElementLocated(srcButtonBy));
             driver.findElement(srcButtonBy).click();
 
             // Target language button
             driver.findElements(By.className("lmt__language_select__active")).get(1).click();
             By targetButtonBy = By.xpath("//button[@dl-test='" + to.getAttributeValue() + "']");
-            WebDriverWait waitTarget = new WebDriverWait(driver, Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
+            WebDriverWait waitTarget = new WebDriverWait(driver,
+                    Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
             waitTarget.until(ExpectedConditions.visibilityOfElementLocated(targetButtonBy));
             driver.findElement(targetButtonBy).click();
-        }  catch (TimeoutException e) {
+        } catch (TimeoutException e) {
             AVAILABLE_INSTANCES.offer(driver);
             throw e;
         }
@@ -183,21 +195,20 @@ class DeepLTranslatorBase {
             driver.findElement(By.className("lmt__source_textarea")).sendKeys(text);
 
             // Target text
-            WebDriverWait waitText = new WebDriverWait(driver, Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
+            WebDriverWait waitText = new WebDriverWait(driver,
+                    Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
             waitText.pollingEvery(Duration.ofMillis(100));
             ExpectedCondition<Boolean> textCondition;
 
             if (text.contains("[...]")) {
                 textCondition = ExpectedConditions.and(
                         DriverWaitUtils.attributeNotBlank(targetTextBy, "innerHTML"),
-                        DriverWaitUtils.attributeNotChanged(targetTextBy, "innerHTML", Duration.ofMillis(1000))
-                );
+                        DriverWaitUtils.attributeNotChanged(targetTextBy, "innerHTML", Duration.ofMillis(1000)));
             } else {
                 textCondition = ExpectedConditions.and(
                         DriverWaitUtils.attributeNotBlank(targetTextBy, "innerHTML"),
                         DriverWaitUtils.attributeNotContains(targetTextBy, "innerHTML", "[...]"),
-                        DriverWaitUtils.attributeNotChanged(targetTextBy, "innerHTML", Duration.ofMillis(1000))
-                );
+                        DriverWaitUtils.attributeNotChanged(targetTextBy, "innerHTML", Duration.ofMillis(1000)));
             }
 
             waitText.until(textCondition);
@@ -214,15 +225,15 @@ class DeepLTranslatorBase {
 
             try {
                 finalDriver.findElement(buttonClearBy).click();
-            } catch (NoSuchElementException ignored) {}
+            } catch (NoSuchElementException ignored) {
+            }
 
             WebDriverWait waitCleared = new WebDriverWait(finalDriver, Duration.ofSeconds(10));
 
             try {
                 waitCleared.until(ExpectedConditions.and(
                         DriverWaitUtils.attributeBlank(sourceText, "innerHTML"),
-                        DriverWaitUtils.attributeBlank(targetTextBy, "innerHTML")
-                ));
+                        DriverWaitUtils.attributeBlank(targetTextBy, "innerHTML")));
                 AVAILABLE_INSTANCES.offer(finalDriver);
             } catch (TimeoutException e) {
                 GLOBAL_INSTANCES.remove(finalDriver);
@@ -234,7 +245,7 @@ class DeepLTranslatorBase {
             throw timeoutException;
 
         // Post-processing
-        if(result != null && configuration.isPostProcessingEnabled()) {
+        if (result != null && configuration.isPostProcessingEnabled()) {
             result = result
                     .trim()
                     .replaceAll("\\s{2,}", " ");
@@ -253,7 +264,39 @@ class DeepLTranslatorBase {
     /**
      * Create new WebDriver instance.
      */
-    private static ChromeDriver newWebDriver() {
+    private static WebDriver newWebDriver() {
+
+        // ChromeDriver driver = new ChromeDriver(options);
+
+        ChromeOptions chromeOptions = getCromeOptions();
+        ChromeDriver driver = null;
+
+        driver = new ChromeDriver(chromeOptions);
+
+        setScreen(driver);
+
+        return driver;
+    }
+
+    /**
+     * Create new RemoteWebDriver instance.
+     */
+    private static WebDriver newRemoteWebDriver(String remoteWebDriverUrl) {
+        ChromeOptions chromeOptions = getCromeOptions();
+        WebDriver driver = null;
+        try {
+            driver = new RemoteWebDriver(new URL(remoteWebDriverUrl), chromeOptions);
+        } catch (MalformedURLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("invalid remote url");
+        }
+
+        setScreen(driver);
+
+        return driver;
+    }
+
+    private static ChromeOptions getCromeOptions() {
         ChromeOptions options = new ChromeOptions();
 
         if (HEADLESS) {
@@ -267,13 +310,23 @@ class DeepLTranslatorBase {
             options.addArguments("--user-agent=" + USER_AGENT);
         }
 
-        ChromeDriver driver = new ChromeDriver(options);
-        driver.executeScript("Object.defineProperty(screen, 'height', {value: 1080, configurable: true, writeable: true});");
-        driver.executeScript("Object.defineProperty(screen, 'width', {value: 1920, configurable: true, writeable: true});");
-        driver.executeScript("Object.defineProperty(screen, 'availWidth', {value: 1920, configurable: true, writeable: true});");
-        driver.executeScript("Object.defineProperty(screen, 'availHeight', {value: 1080, configurable: true, writeable: true});");
+        // ChromeDriver driver = new ChromeDriver(options);
 
-        return driver;
+        ChromeOptions chromeOptions = new ChromeOptions();
+        chromeOptions.setCapability("browserVersion", "67");
+        chromeOptions.setCapability("platformName", "Windows XP");
+        return chromeOptions;
+    }
+
+    private static void setScreen(WebDriver driver) {
+        ((ChromeDriver) driver).executeScript(
+                "Object.defineProperty(screen, 'height', {value: 1080, configurable: true, writeable: true});");
+        ((ChromeDriver) driver).executeScript(
+                "Object.defineProperty(screen, 'width', {value: 1920, configurable: true, writeable: true});");
+        ((ChromeDriver) driver).executeScript(
+                "Object.defineProperty(screen, 'availWidth', {value: 1920, configurable: true, writeable: true});");
+        ((ChromeDriver) driver).executeScript(
+                "Object.defineProperty(screen, 'availHeight', {value: 1080, configurable: true, writeable: true});");
     }
 
 }
