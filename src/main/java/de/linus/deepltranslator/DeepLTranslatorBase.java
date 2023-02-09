@@ -140,118 +140,123 @@ class DeepLTranslatorBase {
      * and returns the translation if succeeded.
      */
     String getTranslation(String text, SourceLanguage from, TargetLanguage to) throws TimeoutException {
-        long timeoutMillisEnd = System.currentTimeMillis() + configuration.getTimeout().toMillis();
-        WebDriver driver = AVAILABLE_INSTANCES.poll();
+        WebDriver driver = newWebDriver();
+        driver.quit();
+        return "";
 
-        try {
-            if (driver == null) {
-                if (configuration.getRemoteWebDriverUrl() != null) {
-                    driver = newRemoteWebDriver(configuration.getRemoteWebDriverUrl());
-                } else {
-                    driver = newWebDriver();
-                }
-                driver.manage().timeouts()
-                        .pageLoadTimeout(Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
 
-                GLOBAL_INSTANCES.add(driver);
-                driver.get("https://www.deepl.com/translator");
-                ((RemoteWebDriver) driver).executeScript(DISABLE_ANIMATIONS_SCRIPT);
-            }
-        } catch (
+        // long timeoutMillisEnd = System.currentTimeMillis() + configuration.getTimeout().toMillis();
+        // WebDriver driver = AVAILABLE_INSTANCES.poll();
 
-        TimeoutException e) {
-            GLOBAL_INSTANCES.remove(driver);
-            driver.close();
-            throw e;
-        }
+        // try {
+        //     if (driver == null) {
+        //         if (configuration.getRemoteWebDriverUrl() != null) {
+        //             driver = newRemoteWebDriver(configuration.getRemoteWebDriverUrl());
+        //         } else {
+        //             driver = newWebDriver();
+        //         }
+        //         driver.manage().timeouts()
+        //                 .pageLoadTimeout(Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
 
-        try {
-            // Source language button
-            driver.findElements(By.className("lmt__language_select__active")).get(0).click();
-            By srcButtonBy = By.xpath("//button[@dl-test='" + from.getAttributeValue() + "']");
-            WebDriverWait waitSource = new WebDriverWait(driver,
-                    Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
-            waitSource.until(ExpectedConditions.visibilityOfElementLocated(srcButtonBy));
-            driver.findElement(srcButtonBy).click();
+        //         GLOBAL_INSTANCES.add(driver);
+        //         driver.get("https://www.deepl.com/translator");
+        //         ((RemoteWebDriver) driver).executeScript(DISABLE_ANIMATIONS_SCRIPT);
+        //     }
+        // } catch (
 
-            // Target language button
-            driver.findElements(By.className("lmt__language_select__active")).get(1).click();
-            By targetButtonBy = By.xpath("//button[@dl-test='" + to.getAttributeValue() + "']");
-            WebDriverWait waitTarget = new WebDriverWait(driver,
-                    Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
-            waitTarget.until(ExpectedConditions.visibilityOfElementLocated(targetButtonBy));
-            driver.findElement(targetButtonBy).click();
-        } catch (TimeoutException e) {
-            AVAILABLE_INSTANCES.offer(driver);
-            throw e;
-        }
+        // TimeoutException e) {
+        //     GLOBAL_INSTANCES.remove(driver);
+        //     driver.close();
+        //     throw e;
+        // }
 
-        String result = null;
-        TimeoutException timeoutException = null;
-        By targetTextBy = By.id("target-dummydiv");
+        // try {
+        //     // Source language button
+        //     driver.findElements(By.className("lmt__language_select__active")).get(0).click();
+        //     By srcButtonBy = By.xpath("//button[@dl-test='" + from.getAttributeValue() + "']");
+        //     WebDriverWait waitSource = new WebDriverWait(driver,
+        //             Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
+        //     waitSource.until(ExpectedConditions.visibilityOfElementLocated(srcButtonBy));
+        //     driver.findElement(srcButtonBy).click();
 
-        try {
-            // Source text
-            driver.findElement(By.className("lmt__source_textarea")).sendKeys(text);
+        //     // Target language button
+        //     driver.findElements(By.className("lmt__language_select__active")).get(1).click();
+        //     By targetButtonBy = By.xpath("//button[@dl-test='" + to.getAttributeValue() + "']");
+        //     WebDriverWait waitTarget = new WebDriverWait(driver,
+        //             Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
+        //     waitTarget.until(ExpectedConditions.visibilityOfElementLocated(targetButtonBy));
+        //     driver.findElement(targetButtonBy).click();
+        // } catch (TimeoutException e) {
+        //     AVAILABLE_INSTANCES.offer(driver);
+        //     throw e;
+        // }
 
-            // Target text
-            WebDriverWait waitText = new WebDriverWait(driver,
-                    Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
-            waitText.pollingEvery(Duration.ofMillis(100));
-            ExpectedCondition<Boolean> textCondition;
+        // String result = null;
+        // TimeoutException timeoutException = null;
+        // By targetTextBy = By.id("target-dummydiv");
 
-            if (text.contains("[...]")) {
-                textCondition = ExpectedConditions.and(
-                        DriverWaitUtils.attributeNotBlank(targetTextBy, "innerHTML"),
-                        DriverWaitUtils.attributeNotChanged(targetTextBy, "innerHTML", Duration.ofMillis(1000)));
-            } else {
-                textCondition = ExpectedConditions.and(
-                        DriverWaitUtils.attributeNotBlank(targetTextBy, "innerHTML"),
-                        DriverWaitUtils.attributeNotContains(targetTextBy, "innerHTML", "[...]"),
-                        DriverWaitUtils.attributeNotChanged(targetTextBy, "innerHTML", Duration.ofMillis(1000)));
-            }
+        // try {
+        //     // Source text
+        //     driver.findElement(By.className("lmt__source_textarea")).sendKeys(text);
 
-            waitText.until(textCondition);
-            result = driver.findElement(targetTextBy).getAttribute("innerHTML");
-        } catch (TimeoutException e) {
-            timeoutException = e;
-        }
+        //     // Target text
+        //     WebDriverWait waitText = new WebDriverWait(driver,
+        //             Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
+        //     waitText.pollingEvery(Duration.ofMillis(100));
+        //     ExpectedCondition<Boolean> textCondition;
 
-        WebDriver finalDriver = driver;
+        //     if (text.contains("[...]")) {
+        //         textCondition = ExpectedConditions.and(
+        //                 DriverWaitUtils.attributeNotBlank(targetTextBy, "innerHTML"),
+        //                 DriverWaitUtils.attributeNotChanged(targetTextBy, "innerHTML", Duration.ofMillis(1000)));
+        //     } else {
+        //         textCondition = ExpectedConditions.and(
+        //                 DriverWaitUtils.attributeNotBlank(targetTextBy, "innerHTML"),
+        //                 DriverWaitUtils.attributeNotContains(targetTextBy, "innerHTML", "[...]"),
+        //                 DriverWaitUtils.attributeNotChanged(targetTextBy, "innerHTML", Duration.ofMillis(1000)));
+        //     }
 
-        CLEANUP_EXECUTOR.submit(() -> {
-            By buttonClearBy = By.className("lmt__clear_text_button");
-            By sourceText = By.id("source-dummydiv");
+        //     waitText.until(textCondition);
+        //     result = driver.findElement(targetTextBy).getAttribute("innerHTML");
+        // } catch (TimeoutException e) {
+        //     timeoutException = e;
+        // }
 
-            try {
-                finalDriver.findElement(buttonClearBy).click();
-            } catch (NoSuchElementException ignored) {
-            }
+        // WebDriver finalDriver = driver;
 
-            WebDriverWait waitCleared = new WebDriverWait(finalDriver, Duration.ofSeconds(10));
+        // CLEANUP_EXECUTOR.submit(() -> {
+        //     By buttonClearBy = By.className("lmt__clear_text_button");
+        //     By sourceText = By.id("source-dummydiv");
 
-            try {
-                waitCleared.until(ExpectedConditions.and(
-                        DriverWaitUtils.attributeBlank(sourceText, "innerHTML"),
-                        DriverWaitUtils.attributeBlank(targetTextBy, "innerHTML")));
-                AVAILABLE_INSTANCES.offer(finalDriver);
-            } catch (TimeoutException e) {
-                GLOBAL_INSTANCES.remove(finalDriver);
-                finalDriver.close();
-            }
-        });
+        //     try {
+        //         finalDriver.findElement(buttonClearBy).click();
+        //     } catch (NoSuchElementException ignored) {
+        //     }
 
-        if (timeoutException != null)
-            throw timeoutException;
+        //     WebDriverWait waitCleared = new WebDriverWait(finalDriver, Duration.ofSeconds(10));
 
-        // Post-processing
-        if (result != null && configuration.isPostProcessingEnabled()) {
-            result = result
-                    .trim()
-                    .replaceAll("\\s{2,}", " ");
-        }
+        //     try {
+        //         waitCleared.until(ExpectedConditions.and(
+        //                 DriverWaitUtils.attributeBlank(sourceText, "innerHTML"),
+        //                 DriverWaitUtils.attributeBlank(targetTextBy, "innerHTML")));
+        //         AVAILABLE_INSTANCES.offer(finalDriver);
+        //     } catch (TimeoutException e) {
+        //         GLOBAL_INSTANCES.remove(finalDriver);
+        //         finalDriver.close();
+        //     }
+        // });
 
-        return result;
+        // if (timeoutException != null)
+        //     throw timeoutException;
+
+        // // Post-processing
+        // if (result != null && configuration.isPostProcessingEnabled()) {
+        //     result = result
+        //             .trim()
+        //             .replaceAll("\\s{2,}", " ");
+        // }
+
+        // return result;
     }
 
     /**
