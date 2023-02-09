@@ -2,7 +2,10 @@ package de.linus.deepltranslator;
 
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
+import java.net.MalformedURLException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -20,7 +23,16 @@ public class DeepLTranslator extends DeepLTranslatorBase {
      * With custom settings.
      */
     public DeepLTranslator(DeepLConfiguration configuration) {
-        super(configuration);
+        // super(configuration);
+        ChromeOptions opt = new ChromeOptions();
+        WebDriver driver = null;
+        try {
+            driver = new RemoteWebDriver(new URL("http://localhost:4444"), opt);
+        } catch (MalformedURLException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        driver.quit();
     }
 
     /**
