@@ -313,8 +313,8 @@ class DeepLTranslatorBase {
         // ChromeDriver driver = new ChromeDriver(options);
 
         ChromeOptions chromeOptions = new ChromeOptions();
-        chromeOptions.setCapability("browserVersion", "67");
-        chromeOptions.setCapability("platformName", "Windows XP");
+        chromeOptions.setCapability("browserVersion", "109");
+        chromeOptions.setCapability("platformName", "Windows 10");
         return chromeOptions;
     }
 
