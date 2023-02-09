@@ -282,7 +282,7 @@ class DeepLTranslatorBase {
      * Create new RemoteWebDriver instance.
      */
     private static WebDriver newRemoteWebDriver(String remoteWebDriverUrl) {
-        ChromeOptions chromeOptions = getCromeOptions();
+        ChromeOptions chromeOptions = new ChromeOptions();
         WebDriver driver = null;
         try {
             driver = new RemoteWebDriver(new URL(remoteWebDriverUrl), chromeOptions);
