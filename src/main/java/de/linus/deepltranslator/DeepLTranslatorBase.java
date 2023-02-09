@@ -54,7 +54,7 @@ class DeepLTranslatorBase {
     /**
      * User-Agent for WebDriver.
      */
-    private static final String USER_AGENT;
+    // private static final String USER_AGENT;
 
     /**
      * Script to disable animations on a website.
@@ -93,13 +93,13 @@ class DeepLTranslatorBase {
      */
     public static boolean HEADLESS = true;
 
-    static {
-        // Set default user agent
-        WebDriver dummyDriver = newWebDriver();
-        String userAgent = (String) ((ChromeDriver) dummyDriver).executeScript("return navigator.userAgent");
-        USER_AGENT = userAgent.replace("HeadlessChrome", "Chrome");
-        dummyDriver.close();
-    }
+    // static {
+    //     // Set default user agent
+    //     WebDriver dummyDriver = newWebDriver();
+    //     String userAgent = (String) ((ChromeDriver) dummyDriver).executeScript("return navigator.userAgent");
+    //     USER_AGENT = userAgent.replace("HeadlessChrome", "Chrome");
+    //     dummyDriver.close();
+    // }
 
     /**
      * All settings.
@@ -306,9 +306,9 @@ class DeepLTranslatorBase {
         options.addArguments("--disable-gpu", "--window-size=1920,1080");
         options.addArguments("--disable-blink-features=AutomationControlled");
 
-        if (USER_AGENT != null) {
-            options.addArguments("--user-agent=" + USER_AGENT);
-        }
+        // if (USER_AGENT != null) {
+        //     options.addArguments("--user-agent=" + USER_AGENT);
+        // }
 
         // ChromeDriver driver = new ChromeDriver(options);
 
