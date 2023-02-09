@@ -265,17 +265,26 @@ class DeepLTranslatorBase {
      * Create new WebDriver instance.
      */
     private static WebDriver newWebDriver() {
+        ChromeOptions opt = new ChromeOptions();
+        WebDriver driver = null;
+        try {
+            driver = new RemoteWebDriver(new URL("http://localhost:4444"), opt);
+        } catch (MalformedURLException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return driver;
 
         // ChromeDriver driver = new ChromeDriver(options);
 
-        ChromeOptions chromeOptions = getCromeOptions();
-        ChromeDriver driver = null;
+        // ChromeOptions chromeOptions = getCromeOptions();
+        // ChromeDriver driver = null;
 
-        driver = new ChromeDriver(chromeOptions);
+        // driver = new ChromeDriver(chromeOptions);
 
-        setScreen(driver);
+        // setScreen(driver);
 
-        return driver;
+        // return driver;
     }
 
     /**
