@@ -17,32 +17,23 @@ public class DeepLTranslator extends DeepLTranslatorBase {
      * With default settings.
      */
     public DeepLTranslator() {
-        // super();
-        ChromeOptions opt = new ChromeOptions();
-        WebDriver driver = null;
-        try {
-            driver = new RemoteWebDriver(new URL("http://localhost:4444"), opt);
-        } catch (MalformedURLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        driver.quit();
+        super();
     }
 
     /**
      * With custom settings.
      */
     public DeepLTranslator(DeepLConfiguration configuration) {
-        // super(configuration);
-        ChromeOptions opt = new ChromeOptions();
-        WebDriver driver = null;
-        try {
-            driver = new RemoteWebDriver(new URL("http://localhost:4444"), opt);
-        } catch (MalformedURLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        driver.quit();
+        super(configuration);
+        // ChromeOptions opt = new ChromeOptions();
+        // WebDriver driver = null;
+        // try {
+        //     driver = new RemoteWebDriver(new URL("http://localhost:4444"), opt);
+        // } catch (MalformedURLException e) {
+        //     // TODO Auto-generated catch block
+        //     e.printStackTrace();
+        // }
+        // driver.quit();
     }
 
     /**
