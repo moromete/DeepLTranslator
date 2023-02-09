@@ -314,7 +314,7 @@ class DeepLTranslatorBase {
 
         ChromeOptions chromeOptions = new ChromeOptions();
         chromeOptions.setCapability("browserVersion", "109");
-        chromeOptions.setCapability("platformName", "Windows 10");
+        chromeOptions.setCapability("platformName", "LINUX");
         return chromeOptions;
     }
 
