@@ -101,9 +101,6 @@ class DeepLTranslatorBase {
         WebDriver dummyDriver = newWebDriver();
         String userAgent = (String) ((ChromeDriver) dummyDriver).executeScript("return navigator.userAgent");
         USER_AGENT = userAgent.replace("HeadlessChrome", "Chrome");
-        System.out.print("\n*****************************************************************\n");
-        System.out.print(USER_AGENT);
-        System.out.print("\n*****************************************************************\n");
         dummyDriver.close();
     }
 
@@ -306,6 +303,45 @@ class DeepLTranslatorBase {
         driver.executeCdpCommand("Page.addScriptToEvaluateOnNewDocument",
                 Map.of("source",
                         "Object.defineProperty(navigator, 'maxTouchPoints', {get: () => 1}); Object.defineProperty(navigator.connection, 'rtt', {get: () => 100});"));
+
+        // Pass plugins prototype test
+        driver.executeCdpCommand("Page.addScriptToEvaluateOnNewDocument",
+                Map.of("source",
+                        "Object.defineProperty(navigator, 'plugins', { " +
+                                "get: () => { " +
+                                "       var ChromiumPDFPlugin = {};" +
+                                "       ChromiumPDFPlugin.__proto__ = Plugin.prototype;" +
+                                "       var plugins = {" +
+                                "           0: ChromiumPDFPlugin," +
+                                "           description: 'Portable Document Format'," +
+                                "           filename: 'internal-pdf-viewer'," +
+                                "           length: 1," +
+                                "           name: 'Chromium PDF Plugin'," +
+                                "           __proto__: PluginArray.prototype," +
+                                "       };" +
+                                "       return plugins;" +
+                                "   }, " +
+                                "});"));
+
+        // Pass mime test
+        driver.executeCdpCommand("Page.addScriptToEvaluateOnNewDocument",
+                Map.of("source",
+                        "Object.defineProperty(navigator, 'mimeTypes', { " +
+                                "get: () => { " +
+                                "       var mime = {};" +
+                                "       mime.__proto__ = MimeType.prototype;" +
+                                "       var mimes = {" +
+                                "           0: mime," +
+                                "           length: 1," +
+                                "           __proto__: MimeTypeArray.prototype," +
+                                "       };" +
+                                "       return mimes;" +
+                                "   }, " +
+                                "});"));
+
+        driver.executeCdpCommand("Page.addScriptToEvaluateOnNewDocument",
+                Map.of("source",
+                        "window.chrome = {runtime: {},};"));
 
         setScreen(driver);
         return driver;

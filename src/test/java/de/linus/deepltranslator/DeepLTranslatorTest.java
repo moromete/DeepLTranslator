@@ -2,7 +2,6 @@ package de.linus.deepltranslator;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Map;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -10,16 +9,12 @@ import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.chrome.ChromeDriver;
 
 public class DeepLTranslatorTest {
     @Test
     void testHeadlessDetection() throws IOException, InterruptedException {
+        // DeepLTranslator.HEADLESS = false;
         WebDriver driver = DeepLTranslator.newWebDriver();
-
-        ((ChromeDriver) driver).executeCdpCommand("Page.addScriptToEvaluateOnNewDocument",
-                Map.of("source",
-                        "Object.defineProperty(navigator, 'plugins', {get: function() {return [1, 2, 3, 4, 5];},});"));
 
         driver.get("https://infosimples.github.io/detect-headless/");
 
@@ -90,6 +85,25 @@ public class DeepLTranslatorTest {
         Assertions.assertEquals(translation, "Hallo Welt");
 
         DeepLTranslator.shutdown();
+    }
+
+    @Test
+    void testTranslateAsync() {
+        DeepLConfiguration deepLConfiguration = new DeepLConfiguration.Builder()
+                .setRepetitions(0)
+                .build();
+
+        DeepLTranslator.HEADLESS = false;
+        DeepLTranslator deepLTranslator = new DeepLTranslator(deepLConfiguration);
+
+        deepLTranslator.translateAsync("Hello world", SourceLanguage.ENGLISH, TargetLanguage.GERMAN)
+                .whenComplete((translation, ex) -> {
+                    if (ex != null) {
+                        ex.printStackTrace();
+                    } else {
+                        Assertions.assertEquals(translation, "Hallo Welt");
+                    }
+                });
     }
 
 }
