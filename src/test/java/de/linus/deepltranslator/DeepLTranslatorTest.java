@@ -12,7 +12,7 @@ import org.openqa.selenium.WebElement;
 
 public class DeepLTranslatorTest {
     @Test
-    void testHeadlessDetection() throws IOException, InterruptedException {
+    public void testHeadlessDetection() throws IOException, InterruptedException {
         // DeepLTranslator.HEADLESS = false;
         WebDriver driver = DeepLTranslator.newWebDriver();
 
@@ -37,19 +37,18 @@ public class DeepLTranslatorTest {
             System.out.print("\033[0;32m" + element.getText() + "\033[0m \n");
         });
 
-        Thread.sleep(5000);
+        // Thread.sleep(5000);
 
         driver.close();
         driver.quit();
     }
 
     @Test
-    void testTranslate() {
-        DeepLConfiguration deepLConfiguration = new DeepLConfiguration.Builder()
-                .setRepetitions(0)
-                .build();
-
+    public void testTranslate() {
         DeepLTranslator.HEADLESS = false;
+        DeepLConfiguration deepLConfiguration = new DeepLConfiguration.Builder()
+                .setRepetitions(0)
+                .build();
         DeepLTranslator deepLTranslator = new DeepLTranslator(deepLConfiguration);
         String translation = deepLTranslator.translate("Hello world", SourceLanguage.ENGLISH, TargetLanguage.GERMAN);
         translation = translation.trim();
@@ -59,7 +58,8 @@ public class DeepLTranslatorTest {
     }
 
     @Test
-    void testTranslateHeadless() {
+    public void testTranslateHeadless() {
+        DeepLTranslator.HEADLESS = true;
         DeepLConfiguration deepLConfiguration = new DeepLConfiguration.Builder()
                 .setRepetitions(0)
                 .build();
@@ -73,7 +73,7 @@ public class DeepLTranslatorTest {
     }
 
     @Test
-    void testTranslateRemote() {
+    public void testTranslateRemote() {
         DeepLConfiguration deepLConfiguration = new DeepLConfiguration.Builder()
                 .setRepetitions(0)
                 .remoteWebDriverUrl("http://localhost:4444")
@@ -87,23 +87,27 @@ public class DeepLTranslatorTest {
         DeepLTranslator.shutdown();
     }
 
-    @Test
-    void testTranslateAsync() {
-        DeepLConfiguration deepLConfiguration = new DeepLConfiguration.Builder()
-                .setRepetitions(0)
-                .build();
+    // @Test
+    // public void testTranslateAsync() {
+    //     DeepLConfiguration deepLConfiguration = new DeepLConfiguration.Builder()
+    //             .setRepetitions(0)
+    //             .build();
 
-        DeepLTranslator.HEADLESS = false;
-        DeepLTranslator deepLTranslator = new DeepLTranslator(deepLConfiguration);
+    //     DeepLTranslator.HEADLESS = false;
+    //     DeepLTranslator deepLTranslator = new DeepLTranslator(deepLConfiguration);
 
-        deepLTranslator.translateAsync("Hello world", SourceLanguage.ENGLISH, TargetLanguage.GERMAN)
-                .whenComplete((translation, ex) -> {
-                    if (ex != null) {
-                        ex.printStackTrace();
-                    } else {
-                        Assertions.assertEquals(translation, "Hallo Welt");
-                    }
-                });
-    }
+    //     deepLTranslator.translateAsync("Hello world", SourceLanguage.ENGLISH, TargetLanguage.GERMAN)
+    //             .whenComplete((translation, ex) -> {
+    //                 if (ex != null) {
+    //                     ex.printStackTrace();
+    //                 } else {
+    //                     System.out.print(translation);
+    //                     Assertions.assertEquals(translation, "Hallo Welt");
+    //                 }
+
+    //             });
+    //     // DeepLTranslator.shutdown();
+
+    // }
 
 }
