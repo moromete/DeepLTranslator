@@ -340,6 +340,7 @@ class DeepLTranslatorBase {
                                 "   }, " +
                                 "});"));
 
+        // Pass Chrome object test                        
         driver.executeCdpCommand("Page.addScriptToEvaluateOnNewDocument",
                 Map.of("source",
                         "window.chrome = {runtime: {},};"));
