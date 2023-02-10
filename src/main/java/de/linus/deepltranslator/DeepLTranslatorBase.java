@@ -361,7 +361,6 @@ class DeepLTranslatorBase {
             e.printStackTrace();
             throw new RuntimeException("Invalid chrome remote url " + remoteWebDriverUrl);
         }
-        setScreen(driver);
         return driver;
     }
 
@@ -375,16 +374,4 @@ class DeepLTranslatorBase {
         (driver).executeScript(
                 "Object.defineProperty(screen, 'availHeight', {value: 1080, configurable: true, writeable: true});");
     }
-
-    private static void setScreen(RemoteWebDriver driver) {
-        (driver).executeScript(
-                "Object.defineProperty(screen, 'height', {value: 1080, configurable: true, writeable: true});");
-        (driver).executeScript(
-                "Object.defineProperty(screen, 'width', {value: 1920, configurable: true, writeable: true});");
-        (driver).executeScript(
-                "Object.defineProperty(screen, 'availWidth', {value: 1920, configurable: true, writeable: true});");
-        (driver).executeScript(
-                "Object.defineProperty(screen, 'availHeight', {value: 1080, configurable: true, writeable: true});");
-    }
-
 }
