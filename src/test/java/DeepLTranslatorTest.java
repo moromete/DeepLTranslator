@@ -1,19 +1,23 @@
 import de.linus.deepltranslator.*;
 
+import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 public class DeepLTranslatorTest {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         DeepLConfiguration deepLConfiguration = new DeepLConfiguration.Builder()
                 .setRepetitions(0)
+                //.remoteWebDriverUrl("http://localhost:4444")
                 .build();
 
         DeepLTranslator deepLTranslator = new DeepLTranslator(deepLConfiguration);
         async(deepLTranslator);
 
+        Random rand = new Random();
         for (String sentence : sentences) {
             sync(deepLTranslator, sentence);
+            Thread.sleep(rand.nextInt(3000, 5000));
         }
 
         try {

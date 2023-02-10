@@ -12,7 +12,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -54,7 +57,7 @@ class DeepLTranslatorBase {
     /**
      * User-Agent for WebDriver.
      */
-    // private static final String USER_AGENT;
+    private static final String USER_AGENT;
 
     /**
      * Script to disable animations on a website.
@@ -93,13 +96,16 @@ class DeepLTranslatorBase {
      */
     public static boolean HEADLESS = true;
 
-    // static {
-    //     // Set default user agent
-    //     WebDriver dummyDriver = newWebDriver();
-    //     String userAgent = (String) ((ChromeDriver) dummyDriver).executeScript("return navigator.userAgent");
-    //     USER_AGENT = userAgent.replace("HeadlessChrome", "Chrome");
-    //     dummyDriver.close();
-    // }
+    static {
+        // Set default user agent
+        WebDriver dummyDriver = newWebDriver();
+        String userAgent = (String) ((ChromeDriver) dummyDriver).executeScript("return navigator.userAgent");
+        USER_AGENT = userAgent.replace("HeadlessChrome", "Chrome");
+        System.out.print("\n*****************************************************************\n");
+        System.out.print(USER_AGENT);
+        System.out.print("\n*****************************************************************\n");
+        dummyDriver.close();
+    }
 
     /**
      * All settings.
@@ -140,123 +146,129 @@ class DeepLTranslatorBase {
      * and returns the translation if succeeded.
      */
     String getTranslation(String text, SourceLanguage from, TargetLanguage to) throws TimeoutException {
-        WebDriver driver = newWebDriver();
-        driver.quit();
-        return "";
+        long timeoutMillisEnd = System.currentTimeMillis() + configuration.getTimeout().toMillis();
+        WebDriver driver = AVAILABLE_INSTANCES.poll();
 
+        try {
+            if (driver == null) {
+                if (configuration.getRemoteWebDriverUrl() != null) {
+                    driver = newRemoteWebDriver(configuration.getRemoteWebDriverUrl());
+                } else {
+                    driver = newWebDriver();
+                }
+                driver.manage().timeouts()
+                        .pageLoadTimeout(Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
 
-        // long timeoutMillisEnd = System.currentTimeMillis() + configuration.getTimeout().toMillis();
-        // WebDriver driver = AVAILABLE_INSTANCES.poll();
+                GLOBAL_INSTANCES.add(driver);
+                driver.get("https://www.deepl.com/translator");
+                ((RemoteWebDriver) driver).executeScript(DISABLE_ANIMATIONS_SCRIPT);
+            }
+        } catch (
 
-        // try {
-        //     if (driver == null) {
-        //         if (configuration.getRemoteWebDriverUrl() != null) {
-        //             driver = newRemoteWebDriver(configuration.getRemoteWebDriverUrl());
-        //         } else {
-        //             driver = newWebDriver();
-        //         }
-        //         driver.manage().timeouts()
-        //                 .pageLoadTimeout(Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
+        TimeoutException e) {
+            GLOBAL_INSTANCES.remove(driver);
+            driver.close();
+            throw e;
+        }
 
-        //         GLOBAL_INSTANCES.add(driver);
-        //         driver.get("https://www.deepl.com/translator");
-        //         ((RemoteWebDriver) driver).executeScript(DISABLE_ANIMATIONS_SCRIPT);
-        //     }
-        // } catch (
+        try {
+            // close Chrome extension install dialog
+            By node = By.xpath("//*[name()='button'][@aria-label='Close']");
+            WebDriverWait waitNode = new WebDriverWait(driver,
+                    Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
+            try {
+                waitNode.until(ExpectedConditions.visibilityOfElementLocated(node));
+                driver.findElement(node).click();
+            } catch (Exception e) {
+                // TODO: handle exception
+            }
 
-        // TimeoutException e) {
-        //     GLOBAL_INSTANCES.remove(driver);
-        //     driver.close();
-        //     throw e;
-        // }
+            // Source language button
+            driver.findElements(By.className("lmt__language_select__active")).get(0).click();
+            By srcButtonBy = By.xpath("//button[@dl-test='" + from.getAttributeValue() + "']");
+            WebDriverWait waitSource = new WebDriverWait(driver,
+                    Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
+            waitSource.until(ExpectedConditions.visibilityOfElementLocated(srcButtonBy));
+            driver.findElement(srcButtonBy).click();
 
-        // try {
-        //     // Source language button
-        //     driver.findElements(By.className("lmt__language_select__active")).get(0).click();
-        //     By srcButtonBy = By.xpath("//button[@dl-test='" + from.getAttributeValue() + "']");
-        //     WebDriverWait waitSource = new WebDriverWait(driver,
-        //             Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
-        //     waitSource.until(ExpectedConditions.visibilityOfElementLocated(srcButtonBy));
-        //     driver.findElement(srcButtonBy).click();
+            // Target language button
+            driver.findElements(By.className("lmt__language_select__active")).get(1).click();
+            By targetButtonBy = By.xpath("//button[@dl-test='" + to.getAttributeValue() + "']");
+            WebDriverWait waitTarget = new WebDriverWait(driver,
+                    Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
+            waitTarget.until(ExpectedConditions.visibilityOfElementLocated(targetButtonBy));
+            driver.findElement(targetButtonBy).click();
+        } catch (TimeoutException e) {
+            AVAILABLE_INSTANCES.offer(driver);
+            throw e;
+        }
 
-        //     // Target language button
-        //     driver.findElements(By.className("lmt__language_select__active")).get(1).click();
-        //     By targetButtonBy = By.xpath("//button[@dl-test='" + to.getAttributeValue() + "']");
-        //     WebDriverWait waitTarget = new WebDriverWait(driver,
-        //             Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
-        //     waitTarget.until(ExpectedConditions.visibilityOfElementLocated(targetButtonBy));
-        //     driver.findElement(targetButtonBy).click();
-        // } catch (TimeoutException e) {
-        //     AVAILABLE_INSTANCES.offer(driver);
-        //     throw e;
-        // }
+        String result = null;
+        TimeoutException timeoutException = null;
+        By targetTextBy = By.id("target-dummydiv");
 
-        // String result = null;
-        // TimeoutException timeoutException = null;
-        // By targetTextBy = By.id("target-dummydiv");
+        try {
+            // Source text
+            driver.findElement(By.className("lmt__source_textarea")).sendKeys(text);
 
-        // try {
-        //     // Source text
-        //     driver.findElement(By.className("lmt__source_textarea")).sendKeys(text);
+            // Target text
+            WebDriverWait waitText = new WebDriverWait(driver,
+                    Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
+            waitText.pollingEvery(Duration.ofMillis(100));
+            ExpectedCondition<Boolean> textCondition;
 
-        //     // Target text
-        //     WebDriverWait waitText = new WebDriverWait(driver,
-        //             Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
-        //     waitText.pollingEvery(Duration.ofMillis(100));
-        //     ExpectedCondition<Boolean> textCondition;
+            if (text.contains("[...]")) {
+                textCondition = ExpectedConditions.and(
+                        DriverWaitUtils.attributeNotBlank(targetTextBy, "innerHTML"),
+                        DriverWaitUtils.attributeNotChanged(targetTextBy, "innerHTML", Duration.ofMillis(1000)));
+            } else {
+                textCondition = ExpectedConditions.and(
+                        DriverWaitUtils.attributeNotBlank(targetTextBy, "innerHTML"),
+                        DriverWaitUtils.attributeNotContains(targetTextBy, "innerHTML", "[...]"),
+                        DriverWaitUtils.attributeNotChanged(targetTextBy, "innerHTML", Duration.ofMillis(1000)));
+            }
 
-        //     if (text.contains("[...]")) {
-        //         textCondition = ExpectedConditions.and(
-        //                 DriverWaitUtils.attributeNotBlank(targetTextBy, "innerHTML"),
-        //                 DriverWaitUtils.attributeNotChanged(targetTextBy, "innerHTML", Duration.ofMillis(1000)));
-        //     } else {
-        //         textCondition = ExpectedConditions.and(
-        //                 DriverWaitUtils.attributeNotBlank(targetTextBy, "innerHTML"),
-        //                 DriverWaitUtils.attributeNotContains(targetTextBy, "innerHTML", "[...]"),
-        //                 DriverWaitUtils.attributeNotChanged(targetTextBy, "innerHTML", Duration.ofMillis(1000)));
-        //     }
+            waitText.until(textCondition);
+            result = driver.findElement(targetTextBy).getAttribute("innerHTML");
+        } catch (TimeoutException e) {
+            timeoutException = e;
+        }
 
-        //     waitText.until(textCondition);
-        //     result = driver.findElement(targetTextBy).getAttribute("innerHTML");
-        // } catch (TimeoutException e) {
-        //     timeoutException = e;
-        // }
+        WebDriver finalDriver = driver;
 
-        // WebDriver finalDriver = driver;
+        CLEANUP_EXECUTOR.submit(() -> {
+            By buttonClearBy = By.className("lmt__clear_text_button");
+            By sourceText = By.id("source-dummydiv");
 
-        // CLEANUP_EXECUTOR.submit(() -> {
-        //     By buttonClearBy = By.className("lmt__clear_text_button");
-        //     By sourceText = By.id("source-dummydiv");
+            try {
+                finalDriver.findElement(buttonClearBy).click();
+            } catch (NoSuchElementException ignored) {
+            }
 
-        //     try {
-        //         finalDriver.findElement(buttonClearBy).click();
-        //     } catch (NoSuchElementException ignored) {
-        //     }
+            WebDriverWait waitCleared = new WebDriverWait(finalDriver, Duration.ofSeconds(10));
 
-        //     WebDriverWait waitCleared = new WebDriverWait(finalDriver, Duration.ofSeconds(10));
+            try {
+                waitCleared.until(ExpectedConditions.and(
+                        DriverWaitUtils.attributeBlank(sourceText, "innerHTML"),
+                        DriverWaitUtils.attributeBlank(targetTextBy, "innerHTML")));
+                AVAILABLE_INSTANCES.offer(finalDriver);
+            } catch (TimeoutException e) {
+                GLOBAL_INSTANCES.remove(finalDriver);
+                finalDriver.close();
+            }
+        });
 
-        //     try {
-        //         waitCleared.until(ExpectedConditions.and(
-        //                 DriverWaitUtils.attributeBlank(sourceText, "innerHTML"),
-        //                 DriverWaitUtils.attributeBlank(targetTextBy, "innerHTML")));
-        //         AVAILABLE_INSTANCES.offer(finalDriver);
-        //     } catch (TimeoutException e) {
-        //         GLOBAL_INSTANCES.remove(finalDriver);
-        //         finalDriver.close();
-        //     }
-        // });
+        if (timeoutException != null)
+            throw timeoutException;
 
-        // if (timeoutException != null)
-        //     throw timeoutException;
+        // Post-processing
+        if (result != null && configuration.isPostProcessingEnabled()) {
+            result = result
+                    .trim()
+                    .replaceAll("\\s{2,}", " ");
+        }
 
-        // // Post-processing
-        // if (result != null && configuration.isPostProcessingEnabled()) {
-        //     result = result
-        //             .trim()
-        //             .replaceAll("\\s{2,}", " ");
-        // }
-
-        // return result;
+        return result;
     }
 
     /**
@@ -269,27 +281,34 @@ class DeepLTranslatorBase {
     /**
      * Create new WebDriver instance.
      */
-    private static WebDriver newWebDriver() {
-        ChromeOptions opt = new ChromeOptions();
-        WebDriver driver = null;
-        try {
-            driver = new RemoteWebDriver(new URL("http://localhost:4444"), opt);
-        } catch (MalformedURLException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+    public static WebDriver newWebDriver() {
+        ChromeOptions chromeOptions = new ChromeOptions();
+
+        if (HEADLESS) {
+            chromeOptions.addArguments("--headless");
         }
+
+        chromeOptions.addArguments("--disable-gpu", "--window-size=1920,1080");
+        chromeOptions.addArguments("--disable-blink-features=AutomationControlled");
+
+        if (USER_AGENT != null) {
+            chromeOptions.addArguments("--user-agent=" + USER_AGENT);
+        }
+
+        ChromeDriver driver = new ChromeDriver(chromeOptions);
+
+        // Pass the permissions test
+        Map<String, Object> params = new HashMap<String, Object>();
+        params.put("permissions", Arrays.asList("notifications"));
+        driver.executeCdpCommand("Browser.grantPermissions", params);
+
+        // Pass rtt test
+        driver.executeCdpCommand("Page.addScriptToEvaluateOnNewDocument",
+                Map.of("source",
+                        "Object.defineProperty(navigator, 'maxTouchPoints', {get: () => 1}); Object.defineProperty(navigator.connection, 'rtt', {get: () => 100});"));
+
+        setScreen(driver);
         return driver;
-
-        // ChromeDriver driver = new ChromeDriver(options);
-
-        // ChromeOptions chromeOptions = getCromeOptions();
-        // ChromeDriver driver = null;
-
-        // driver = new ChromeDriver(chromeOptions);
-
-        // setScreen(driver);
-
-        // return driver;
     }
 
     /**
@@ -297,49 +316,36 @@ class DeepLTranslatorBase {
      */
     private static WebDriver newRemoteWebDriver(String remoteWebDriverUrl) {
         ChromeOptions chromeOptions = new ChromeOptions();
-        WebDriver driver = null;
+        RemoteWebDriver driver = null;
         try {
             driver = new RemoteWebDriver(new URL(remoteWebDriverUrl), chromeOptions);
         } catch (MalformedURLException e) {
             e.printStackTrace();
-            throw new RuntimeException("invalid remote url");
+            throw new RuntimeException("Invalid chrome remote url " + remoteWebDriverUrl);
         }
-
         setScreen(driver);
-
         return driver;
     }
 
-    private static ChromeOptions getCromeOptions() {
-        ChromeOptions options = new ChromeOptions();
-
-        if (HEADLESS) {
-            options.addArguments("--headless");
-        }
-
-        options.addArguments("--disable-gpu", "--window-size=1920,1080");
-        options.addArguments("--disable-blink-features=AutomationControlled");
-
-        // if (USER_AGENT != null) {
-        //     options.addArguments("--user-agent=" + USER_AGENT);
-        // }
-
-        // ChromeDriver driver = new ChromeDriver(options);
-
-        ChromeOptions chromeOptions = new ChromeOptions();
-        chromeOptions.setCapability("browserVersion", "109");
-        chromeOptions.setCapability("platformName", "LINUX");
-        return chromeOptions;
+    private static void setScreen(ChromeDriver driver) {
+        (driver).executeScript(
+                "Object.defineProperty(screen, 'height', {value: 1080, configurable: true, writeable: true});");
+        (driver).executeScript(
+                "Object.defineProperty(screen, 'width', {value: 1920, configurable: true, writeable: true});");
+        (driver).executeScript(
+                "Object.defineProperty(screen, 'availWidth', {value: 1920, configurable: true, writeable: true});");
+        (driver).executeScript(
+                "Object.defineProperty(screen, 'availHeight', {value: 1080, configurable: true, writeable: true});");
     }
 
-    private static void setScreen(WebDriver driver) {
-        ((ChromeDriver) driver).executeScript(
+    private static void setScreen(RemoteWebDriver driver) {
+        (driver).executeScript(
                 "Object.defineProperty(screen, 'height', {value: 1080, configurable: true, writeable: true});");
-        ((ChromeDriver) driver).executeScript(
+        (driver).executeScript(
                 "Object.defineProperty(screen, 'width', {value: 1920, configurable: true, writeable: true});");
-        ((ChromeDriver) driver).executeScript(
+        (driver).executeScript(
                 "Object.defineProperty(screen, 'availWidth', {value: 1920, configurable: true, writeable: true});");
-        ((ChromeDriver) driver).executeScript(
+        (driver).executeScript(
                 "Object.defineProperty(screen, 'availHeight', {value: 1080, configurable: true, writeable: true});");
     }
 
