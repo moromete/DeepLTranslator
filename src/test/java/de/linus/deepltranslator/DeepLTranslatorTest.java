@@ -11,12 +11,10 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.interactions.Actions;
 
 public class DeepLTranslatorTest {
     @Test
     void testHeadlessDetection() throws IOException, InterruptedException {
-        // DeepLTranslator.HEADLESS = false;
         WebDriver driver = DeepLTranslator.newWebDriver();
 
         ((ChromeDriver) driver).executeCdpCommand("Page.addScriptToEvaluateOnNewDocument",
@@ -27,16 +25,6 @@ public class DeepLTranslatorTest {
 
         Alert alt = driver.switchTo().alert();
         alt.accept();
-
-        // WebElement hoverable = driver.findElement(By.className("headless"));
-        // new Actions(driver).moveToElement(hoverable).perform();
-        // Thread.sleep(1000);
-        // hoverable = driver.findElement(By.className("undefined"));
-        // new Actions(driver).moveToElement(hoverable).perform();
-        // WebElement tracker = driver.findElement(By.tagName("body"));
-        // new Actions(driver)
-        // .moveToElement(tracker, 8, 0)
-        // .perform();
 
         List<WebElement> elements = driver.findElements(By.xpath("//tr[@class='headless']"));
         elements.forEach(element -> {
