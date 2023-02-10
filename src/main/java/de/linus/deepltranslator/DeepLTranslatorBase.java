@@ -302,7 +302,8 @@ class DeepLTranslatorBase {
         // Pass rtt test
         driver.executeCdpCommand("Page.addScriptToEvaluateOnNewDocument",
                 Map.of("source",
-                        "Object.defineProperty(navigator, 'maxTouchPoints', {get: () => 1}); Object.defineProperty(navigator.connection, 'rtt', {get: () => 100});"));
+                        "Object.defineProperty(navigator, 'maxTouchPoints', {get: () => 1}); " +
+                                "Object.defineProperty(navigator.connection, 'rtt', {get: () => 100});"));
 
         // Pass plugins prototype test
         driver.executeCdpCommand("Page.addScriptToEvaluateOnNewDocument",
