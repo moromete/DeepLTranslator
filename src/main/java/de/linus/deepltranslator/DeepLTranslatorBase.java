@@ -1,24 +1,20 @@
 package de.linus.deepltranslator;
 
-import org.openqa.selenium.*;
-import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
+
+import org.openqa.selenium.By;
+import org.openqa.selenium.NoSuchElementException;
+import org.openqa.selenium.TimeoutException;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * API for the DeepL Translator
@@ -53,11 +49,6 @@ class DeepLTranslatorBase {
      * Available browser instances for this configuration.
      */
     private static final LinkedBlockingQueue<WebDriver> AVAILABLE_INSTANCES = new LinkedBlockingQueue<>();
-
-    /**
-     * User-Agent for WebDriver.
-     */
-    private static final String USER_AGENT;
 
     /**
      * Script to disable animations on a website.
@@ -95,14 +86,6 @@ class DeepLTranslatorBase {
      * For debugging purposes.
      */
     public static boolean HEADLESS = true;
-
-    static {
-        // Set default user agent
-        WebDriver dummyDriver = newWebDriver();
-        String userAgent = (String) ((ChromeDriver) dummyDriver).executeScript("return navigator.userAgent");
-        USER_AGENT = userAgent.replace("HeadlessChrome", "Chrome");
-        dummyDriver.close();
-    }
 
     /**
      * All settings.
@@ -148,37 +131,29 @@ class DeepLTranslatorBase {
 
         try {
             if (driver == null) {
-                if (configuration.getRemoteWebDriverUrl() != null) {
-                    driver = newRemoteWebDriver(configuration.getRemoteWebDriverUrl());
-                } else {
-                    driver = newWebDriver();
-                }
-                driver.manage().timeouts()
-                        .pageLoadTimeout(Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
+                WebDriverBuilder.REMOTE_WEBDRIVER_URL = configuration.getRemoteWebDriverUrl();
+                WebDriverBuilder.TIMEOUT = configuration.getTimeout();
+
+                driver = WebDriverBuilder.build();
 
                 GLOBAL_INSTANCES.add(driver);
                 driver.get("https://www.deepl.com/translator");
                 ((RemoteWebDriver) driver).executeScript(DISABLE_ANIMATIONS_SCRIPT);
+
             }
         } catch (
 
         TimeoutException e) {
             GLOBAL_INSTANCES.remove(driver);
-            driver.close();
+            if (driver != null) {
+                driver.close();
+                driver.quit();
+            }
             throw e;
         }
 
         try {
-            // close Chrome extension install dialog
-            By node = By.xpath("//*[name()='button'][@aria-label='Close']");
-            WebDriverWait waitNode = new WebDriverWait(driver,
-                    Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
-            try {
-                waitNode.until(ExpectedConditions.visibilityOfElementLocated(node));
-                driver.findElement(node).click();
-            } catch (Exception e) {
-                // TODO: handle exception
-            }
+            closeCromeExtensionInstallDialog(timeoutMillisEnd, driver);
 
             // Source language button
             driver.findElements(By.className("lmt__language_select__active")).get(0).click();
@@ -268,6 +243,19 @@ class DeepLTranslatorBase {
         return result;
     }
 
+    private void closeCromeExtensionInstallDialog(long timeoutMillisEnd, WebDriver driver) {
+        // close Chrome extension install dialog
+        By node = By.xpath("//*[name()='button'][@aria-label='Close']");
+        WebDriverWait waitNode = new WebDriverWait(driver,
+                Duration.ofMillis(timeoutMillisEnd - System.currentTimeMillis()));
+        try {
+            waitNode.until(ExpectedConditions.visibilityOfElementLocated(node));
+            driver.findElement(node).click();
+        } catch (Exception e) {
+            // TODO: handle exception
+        }
+    }
+
     /**
      * The settings.
      */
@@ -275,103 +263,4 @@ class DeepLTranslatorBase {
         return configuration;
     }
 
-    /**
-     * Create new WebDriver instance.
-     */
-    public static WebDriver newWebDriver() {
-        ChromeOptions chromeOptions = new ChromeOptions();
-
-        if (HEADLESS) {
-            chromeOptions.addArguments("--headless");
-        }
-
-        chromeOptions.addArguments("--disable-gpu", "--window-size=1920,1080");
-        chromeOptions.addArguments("--disable-blink-features=AutomationControlled");
-
-        if (USER_AGENT != null) {
-            chromeOptions.addArguments("--user-agent=" + USER_AGENT);
-        }
-
-        ChromeDriver driver = new ChromeDriver(chromeOptions);
-
-        // Pass the permissions test
-        Map<String, Object> params = new HashMap<String, Object>();
-        params.put("permissions", Arrays.asList("notifications"));
-        driver.executeCdpCommand("Browser.grantPermissions", params);
-
-        // Pass rtt test
-        driver.executeCdpCommand("Page.addScriptToEvaluateOnNewDocument",
-                Map.of("source",
-                        "Object.defineProperty(navigator, 'maxTouchPoints', {get: () => 1}); " +
-                                "Object.defineProperty(navigator.connection, 'rtt', {get: () => 100});"));
-
-        // Pass plugins prototype test
-        driver.executeCdpCommand("Page.addScriptToEvaluateOnNewDocument",
-                Map.of("source",
-                        "Object.defineProperty(navigator, 'plugins', { " +
-                                "get: () => { " +
-                                "       var ChromiumPDFPlugin = {};" +
-                                "       ChromiumPDFPlugin.__proto__ = Plugin.prototype;" +
-                                "       var plugins = {" +
-                                "           0: ChromiumPDFPlugin," +
-                                "           description: 'Portable Document Format'," +
-                                "           filename: 'internal-pdf-viewer'," +
-                                "           length: 1," +
-                                "           name: 'Chromium PDF Plugin'," +
-                                "           __proto__: PluginArray.prototype," +
-                                "       };" +
-                                "       return plugins;" +
-                                "   }, " +
-                                "});"));
-
-        // Pass mime test
-        driver.executeCdpCommand("Page.addScriptToEvaluateOnNewDocument",
-                Map.of("source",
-                        "Object.defineProperty(navigator, 'mimeTypes', { " +
-                                "get: () => { " +
-                                "       var mime = {};" +
-                                "       mime.__proto__ = MimeType.prototype;" +
-                                "       var mimes = {" +
-                                "           0: mime," +
-                                "           length: 1," +
-                                "           __proto__: MimeTypeArray.prototype," +
-                                "       };" +
-                                "       return mimes;" +
-                                "   }, " +
-                                "});"));
-
-        // Pass Chrome object test                        
-        driver.executeCdpCommand("Page.addScriptToEvaluateOnNewDocument",
-                Map.of("source",
-                        "window.chrome = {runtime: {},};"));
-
-        setScreen(driver);
-        return driver;
-    }
-
-    /**
-     * Create new RemoteWebDriver instance.
-     */
-    private static WebDriver newRemoteWebDriver(String remoteWebDriverUrl) {
-        ChromeOptions chromeOptions = new ChromeOptions();
-        RemoteWebDriver driver = null;
-        try {
-            driver = new RemoteWebDriver(new URL(remoteWebDriverUrl), chromeOptions);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Invalid chrome remote url " + remoteWebDriverUrl);
-        }
-        return driver;
-    }
-
-    private static void setScreen(ChromeDriver driver) {
-        (driver).executeScript(
-                "Object.defineProperty(screen, 'height', {value: 1080, configurable: true, writeable: true});");
-        (driver).executeScript(
-                "Object.defineProperty(screen, 'width', {value: 1920, configurable: true, writeable: true});");
-        (driver).executeScript(
-                "Object.defineProperty(screen, 'availWidth', {value: 1920, configurable: true, writeable: true});");
-        (driver).executeScript(
-                "Object.defineProperty(screen, 'availHeight', {value: 1080, configurable: true, writeable: true});");
-    }
 }
