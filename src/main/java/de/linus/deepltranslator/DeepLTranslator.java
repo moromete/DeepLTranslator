@@ -86,15 +86,4 @@ public class DeepLTranslator extends DeepLTranslatorBase {
         EXECUTOR_LIST.remove(executor);
         return result;
     }
-
-    /**
-     * Tries to quit all browsers and all active threads, which were started for asynchronous translating.
-     * This method does not wait for the running tasks to finish.
-     */
-    public static void shutdown() {
-        GLOBAL_INSTANCES.forEach(WebDriver::quit);
-        EXECUTOR_LIST.forEach(ExecutorService::shutdownNow);
-        CLEANUP_EXECUTOR.shutdownNow();
-    }
-
 }

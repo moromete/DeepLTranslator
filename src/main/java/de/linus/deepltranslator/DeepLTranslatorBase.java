@@ -8,7 +8,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.openqa.selenium.By;
-import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.remote.RemoteWebDriver;
@@ -38,7 +37,7 @@ class DeepLTranslatorBase {
      *
      * @see DeepLTranslator#translate(String, SourceLanguage, TargetLanguage)
      */
-    static final ExecutorService CLEANUP_EXECUTOR = Executors.newCachedThreadPool();
+    static ExecutorService CLEANUP_EXECUTOR;
 
     /**
      * All browser instances created.
@@ -99,6 +98,7 @@ class DeepLTranslatorBase {
     DeepLTranslatorBase() {
         this.configuration = new DeepLConfiguration.Builder().build();
         EXECUTOR_LIST.add(executor);
+        CLEANUP_EXECUTOR = Executors.newCachedThreadPool();
     }
 
     /**
@@ -107,6 +107,7 @@ class DeepLTranslatorBase {
     DeepLTranslatorBase(DeepLConfiguration configuration) {
         this.configuration = configuration;
         EXECUTOR_LIST.add(executor);
+        CLEANUP_EXECUTOR = Executors.newCachedThreadPool();
     }
 
     /**
@@ -129,7 +130,7 @@ class DeepLTranslatorBase {
     String getTranslation(String text, SourceLanguage from, TargetLanguage to) throws TimeoutException {
         long timeoutMillisEnd = System.currentTimeMillis() + configuration.getTimeout().toMillis();
         WebDriver driver = AVAILABLE_INSTANCES.poll();
-        
+
         try {
             if (driver == null) {
                 WebDriverBuilder.REMOTE_WEBDRIVER_URL = configuration.getRemoteWebDriverUrl();
@@ -148,7 +149,6 @@ class DeepLTranslatorBase {
             GLOBAL_INSTANCES.remove(driver);
             if (driver != null) {
                 driver.close();
-                driver.quit();
             }
             throw e;
         }
@@ -210,13 +210,9 @@ class DeepLTranslatorBase {
         WebDriver finalDriver = driver;
 
         CLEANUP_EXECUTOR.submit(() -> {
-            By buttonClearBy = By.className("lmt__clear_text_button");
+            By buttonClearBy = By.className("lmt__clear_text_button_wrapper");
             By sourceText = By.id("source-dummydiv");
-
-            try {
-                finalDriver.findElement(buttonClearBy).click();
-            } catch (NoSuchElementException ignored) {
-            }
+            finalDriver.findElement(buttonClearBy).click();
 
             WebDriverWait waitCleared = new WebDriverWait(finalDriver, Duration.ofSeconds(10));
 
@@ -228,7 +224,6 @@ class DeepLTranslatorBase {
             } catch (TimeoutException e) {
                 GLOBAL_INSTANCES.remove(finalDriver);
                 finalDriver.close();
-                finalDriver.quit();
             }
         });
 
@@ -265,8 +260,17 @@ class DeepLTranslatorBase {
         return configuration;
     }
 
-    // public DeepLTranslatorBase headless(boolean headless) {
-    //     this.headless = headless;
-    //     return this;
-    // }
+    /**
+     * Tries to quit all browsers and all active threads, which were started for
+     * asynchronous translating.
+     * This method does not wait for the running tasks to finish.
+     */
+    public static void shutdown() {
+        GLOBAL_INSTANCES.forEach(WebDriver::quit);
+        EXECUTOR_LIST.forEach(ExecutorService::shutdownNow);
+        CLEANUP_EXECUTOR.shutdownNow();
+        AVAILABLE_INSTANCES.clear();
+        GLOBAL_INSTANCES.clear();
+        EXECUTOR_LIST.clear();
+    }
 }
