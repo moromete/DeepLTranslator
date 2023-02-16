@@ -134,6 +134,7 @@ class DeepLTranslatorBase {
         try {
             if (driver == null) {
                 WebDriverBuilder.REMOTE_WEBDRIVER_URL = configuration.getRemoteWebDriverUrl();
+                WebDriverBuilder.USER_AGENT = configuration.getUserAgent();
                 WebDriverBuilder.TIMEOUT = configuration.getTimeout();
 
                 driver = WebDriverBuilder.builder().headless(HEADLESS).build();

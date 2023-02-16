@@ -11,6 +11,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.remote.RemoteWebDriver;
+import org.openqa.selenium.remote.UselessFileDetector;
 
 public class WebDriverBuilder {
 
@@ -23,17 +24,18 @@ public class WebDriverBuilder {
     static {
         // HEADLESS = true;
         TIMEOUT = Duration.ofSeconds(10);
-        setUserAgent();
+        USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36";
+        // setUserAgent();
     }
 
-    private static void setUserAgent() {
-        WebDriver dummyDriver = WebDriverBuilder.builder().headless(true).build();
-        String userAgent = (String) ((ChromeDriver) dummyDriver).executeScript("return navigator.userAgent");
-        USER_AGENT = userAgent.replace("HeadlessChrome", "Chrome");
-        dummyDriver.close();
-    }
+    // private static void setUserAgent() {
+    //     WebDriver dummyDriver = WebDriverBuilder.builder().headless(true).build();
+    //     String userAgent = (String) ((ChromeDriver) dummyDriver).executeScript("return navigator.userAgent");
+    //     USER_AGENT = userAgent.replace("HeadlessChrome", "Chrome");
+    //     dummyDriver.close();
+    // }
 
-    static WebDriverBuilder builder()  {
+    static WebDriverBuilder builder() {
         return new WebDriverBuilder();
     }
 

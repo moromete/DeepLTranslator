@@ -3,6 +3,8 @@ package de.linus.deepltranslator;
 import java.time.Duration;
 import java.util.function.Function;
 
+import org.openqa.selenium.devtools.idealized.Network.UserAgent;
+
 public class DeepLConfiguration {
 
     /**
@@ -51,18 +53,24 @@ public class DeepLConfiguration {
     private final boolean postProcessing;
 
     private final String remoteWebDriverUrl;
+    private final String userAgent; 
 
     private DeepLConfiguration(Duration timeout, int repetitions, Function<Integer, Duration> repetitionsDelay,
-            boolean postProcessing, String remoteWebDriverUrl) {
+            boolean postProcessing, String remoteWebDriverUrl, String userAgent) {
         this.timeout = timeout;
         this.repetitions = repetitions;
         this.repetitionsDelay = repetitionsDelay;
         this.postProcessing = postProcessing;
         this.remoteWebDriverUrl = remoteWebDriverUrl;
+        this.userAgent = userAgent;
     }
 
     public String getRemoteWebDriverUrl() {
         return remoteWebDriverUrl;
+    }
+
+    public String getUserAgent() {
+        return userAgent;
     }
 
     /**
@@ -125,6 +133,7 @@ public class DeepLConfiguration {
         private Function<Integer, Duration> repetitionsDelay;
         private boolean postProcessing;
         private String remoteWebDriverUrl;
+        private String userAgent;
 
         public Builder() {
             timeout = Duration.ofSeconds(10);
@@ -195,11 +204,16 @@ public class DeepLConfiguration {
             return this;
         }
 
+        public Builder userAgent(String userAgent) {
+            this.userAgent = userAgent;
+            return this;
+        }
+
         /**
          * Builds the configuration.
          */
         public DeepLConfiguration build() {
-            return new DeepLConfiguration(timeout, repetitions, repetitionsDelay, postProcessing, remoteWebDriverUrl);
+            return new DeepLConfiguration(timeout, repetitions, repetitionsDelay, postProcessing, remoteWebDriverUrl, userAgent);
         }
 
     }
