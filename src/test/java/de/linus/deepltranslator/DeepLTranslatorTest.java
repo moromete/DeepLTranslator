@@ -123,11 +123,7 @@ public class DeepLTranslatorTest {
 
     @AfterAll
     static void terminateTesting() throws IOException {
-        // try {
-            DeepLTranslator.shutdown();    
-        // } catch (Exception e) {
-            // TODO: handle exception
-        // }
+        DeepLTranslator.shutdown();    
         Runtime.getRuntime().exec("killall chromedriver");
         Runtime.getRuntime().exec("killall chrome");
     }
