@@ -3,8 +3,6 @@ package de.linus.deepltranslator;
 import java.time.Duration;
 import java.util.function.Function;
 
-import org.openqa.selenium.devtools.idealized.Network.UserAgent;
-
 public class DeepLConfiguration {
 
     /**

@@ -24,6 +24,7 @@ public class DeepLTranslatorTest {
 
     @Test
     public void testHeadlessDetection() throws IOException, InterruptedException {
+        WebDriverBuilder.USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36";
         WebDriver driver = WebDriverBuilder.builder().headless(true).build();
 
         driver.get("https://infosimples.github.io/detect-headless/");
