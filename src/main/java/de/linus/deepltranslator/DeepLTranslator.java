@@ -1,11 +1,9 @@
 package de.linus.deepltranslator;
 
-import org.openqa.selenium.TimeoutException;
-import org.openqa.selenium.WebDriver;
-
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
+
+import org.openqa.selenium.TimeoutException;
 
 public class DeepLTranslator extends DeepLTranslatorBase {
 
