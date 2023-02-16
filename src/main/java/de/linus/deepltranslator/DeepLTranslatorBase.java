@@ -86,6 +86,7 @@ class DeepLTranslatorBase {
      * For debugging purposes.
      */
     public static boolean HEADLESS = true;
+    // public boolean headless;
 
     /**
      * All settings.
@@ -128,13 +129,13 @@ class DeepLTranslatorBase {
     String getTranslation(String text, SourceLanguage from, TargetLanguage to) throws TimeoutException {
         long timeoutMillisEnd = System.currentTimeMillis() + configuration.getTimeout().toMillis();
         WebDriver driver = AVAILABLE_INSTANCES.poll();
-
+        
         try {
             if (driver == null) {
                 WebDriverBuilder.REMOTE_WEBDRIVER_URL = configuration.getRemoteWebDriverUrl();
                 WebDriverBuilder.TIMEOUT = configuration.getTimeout();
 
-                driver = WebDriverBuilder.build();
+                driver = WebDriverBuilder.builder().headless(HEADLESS).build();
 
                 GLOBAL_INSTANCES.add(driver);
                 driver.get("https://www.deepl.com/translator");
@@ -227,6 +228,7 @@ class DeepLTranslatorBase {
             } catch (TimeoutException e) {
                 GLOBAL_INSTANCES.remove(finalDriver);
                 finalDriver.close();
+                finalDriver.quit();
             }
         });
 
@@ -263,4 +265,8 @@ class DeepLTranslatorBase {
         return configuration;
     }
 
+    // public DeepLTranslatorBase headless(boolean headless) {
+    //     this.headless = headless;
+    //     return this;
+    // }
 }

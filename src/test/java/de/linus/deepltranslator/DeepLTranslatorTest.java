@@ -24,8 +24,7 @@ public class DeepLTranslatorTest {
 
     @Test
     public void testHeadlessDetection() throws IOException, InterruptedException {
-        // DeepLTranslator.HEADLESS = false;
-        WebDriver driver = WebDriverBuilder.build();
+        WebDriver driver = WebDriverBuilder.builder().headless(true).build();
 
         driver.get("https://infosimples.github.io/detect-headless/");
 
@@ -64,6 +63,7 @@ public class DeepLTranslatorTest {
         String translation = deepLTranslator.translate("Hello world", SourceLanguage.ENGLISH, TargetLanguage.GERMAN);
         translation = translation.trim();
         Assertions.assertEquals(translation, "Hallo Welt");
+        DeepLTranslator.shutdown();
     }
 
     @Test
@@ -77,28 +77,15 @@ public class DeepLTranslatorTest {
         String translation = deepLTranslator.translate("Hello world", SourceLanguage.ENGLISH, TargetLanguage.GERMAN);
         translation = translation.trim();
         Assertions.assertEquals(translation, "Hallo Welt");
+        DeepLTranslator.shutdown();
     }
 
     @Test
-    public void testTranslateRemote() {
-        DeepLConfiguration deepLConfiguration = new DeepLConfiguration.Builder()
-                .setRepetitions(0)
-                .remoteWebDriverUrl(REMOTE_WEBDRIVER_URL)
-                .build();
-
-        DeepLTranslator deepLTranslator = new DeepLTranslator(deepLConfiguration);
-        String translation = deepLTranslator.translate("Hello world", SourceLanguage.ENGLISH, TargetLanguage.GERMAN);
-        translation = translation.trim();
-        Assertions.assertEquals(translation, "Hallo Welt");
-    }
-
-    @Test
-    public void testTranslateAsync() {
+    public void testTranslateAsyncHeadless() {
+        DeepLTranslator.HEADLESS = true;
         DeepLConfiguration deepLConfiguration = new DeepLConfiguration.Builder()
                 .setRepetitions(0)
                 .build();
-
-        DeepLTranslator.HEADLESS = false;
         DeepLTranslator deepLTranslator = new DeepLTranslator(deepLConfiguration);
 
         deepLTranslator.translateAsync("Hello world", SourceLanguage.ENGLISH, TargetLanguage.GERMAN)
@@ -106,7 +93,6 @@ public class DeepLTranslatorTest {
                     if (ex != null) {
                         ex.printStackTrace();
                     } else {
-                        System.out.print(translation);
                         Assertions.assertEquals(translation, "Hallo Welt");
                     }
 
@@ -117,12 +103,27 @@ public class DeepLTranslatorTest {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
+        DeepLTranslator.shutdown();
+    }
+
+    @Test
+    public void testTranslateRemote() {
+        DeepLTranslator.HEADLESS = false;
+        DeepLConfiguration deepLConfiguration = new DeepLConfiguration.Builder()
+                .setRepetitions(0)
+                .remoteWebDriverUrl(REMOTE_WEBDRIVER_URL)
+                .build();
+
+        DeepLTranslator deepLTranslator = new DeepLTranslator(deepLConfiguration);
+        String translation = deepLTranslator.translate("Hello world", SourceLanguage.ENGLISH, TargetLanguage.GERMAN);
+        translation = translation.trim();
+        Assertions.assertEquals(translation, "Hallo Welt");
+        DeepLTranslator.shutdown();
     }
 
     @AfterAll
     static void terminateTesting() throws IOException {
-        DeepLTranslator.shutdown();
         Runtime.getRuntime().exec("killall chromedriver");
+        Runtime.getRuntime().exec("killall chrome");
     }
-
 }

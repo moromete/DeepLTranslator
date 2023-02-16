@@ -15,28 +15,33 @@ import org.openqa.selenium.remote.RemoteWebDriver;
 public class WebDriverBuilder {
 
     static String REMOTE_WEBDRIVER_URL;
-    static boolean HEADLESS;
+    // static boolean HEADLESS;
+    private boolean headless;
     static String USER_AGENT;
     static Duration TIMEOUT;
 
     static {
-        HEADLESS = true;
+        // HEADLESS = true;
         TIMEOUT = Duration.ofSeconds(10);
         setUserAgent();
     }
 
     private static void setUserAgent() {
-        WebDriver dummyDriver = new WebDriverBuilder().newWebDriver();
+        WebDriver dummyDriver = WebDriverBuilder.builder().headless(true).build();
         String userAgent = (String) ((ChromeDriver) dummyDriver).executeScript("return navigator.userAgent");
         USER_AGENT = userAgent.replace("HeadlessChrome", "Chrome");
         dummyDriver.close();
     }
 
-    static WebDriver build() {
+    static WebDriverBuilder builder()  {
+        return new WebDriverBuilder();
+    }
+
+    public WebDriver build() {
         if (REMOTE_WEBDRIVER_URL == null) {
-            return new WebDriverBuilder().newWebDriver();
+            return newWebDriver();
         } else {
-            return new WebDriverBuilder().newRemoteWebDriver();
+            return newRemoteWebDriver();
         }
     }
 
@@ -123,7 +128,7 @@ public class WebDriverBuilder {
     private ChromeOptions getChromeOptions() {
         ChromeOptions chromeOptions = new ChromeOptions();
 
-        if (HEADLESS) {
+        if (headless) {
             chromeOptions.addArguments("--headless");
         }
 
@@ -160,5 +165,10 @@ public class WebDriverBuilder {
                 "Object.defineProperty(screen, 'availWidth', {value: 1920, configurable: true, writeable: true});");
         (driver).executeScript(
                 "Object.defineProperty(screen, 'availHeight', {value: 1080, configurable: true, writeable: true});");
+    }
+
+    public WebDriverBuilder headless(boolean headless) {
+        this.headless = headless;
+        return this;
     }
 }
